@@ -1,0 +1,128 @@
+# 1)Використання стрілочних функцій
+# Приклад неформатованого коду:
+function greeings(username){ 
+console.log(Hello, ${username}!);
+}
+# Код після форматування:
+const greet = username => console.log(`Hello, ${username}!`);
+
+# 2)Використовуйте функціональне програмування
+# Приклад неформатованого коду:
+const values = [1, 2, 3];
+values.push(4);
+# Код після форматування:
+const values = [1, 2, 3];
+const updatedValues = [...values, 4];
+
+# 3)Уникайте вкладеного коду
+# Приклад неформатованого коду:
+if (isConditionA) {
+  if (isConditionB) {
+    // код
+  }
+}
+# Код після форматування:
+if (isConditionA) {
+  return;
+}
+if (isConditionB) {
+  return;
+}
+// код
+
+#4)Використання параметрів за замовчуванням
+# Приклад неформатованого коду:
+function sayHello(personName) {
+  if (!personName) {
+    personName = 'Friend';
+  }
+  console.log(`Hello, ${personName}!`);
+}
+# Код після форматування:
+function sayHello(personName = 'Friend') {
+  console.log(`Hello, ${personName}!`);
+}
+
+#5)Використання деструктуризації
+# Приклад неформатованого коду:
+const user = { name: 'Kate', age: 19 };
+const userName = user.name;
+const userAge = user.age;
+# Код після форматування:
+const { userName, userAge } = { name: 'Kate', age: 19 };
+
+#6)Використовуйте Promises
+# Приклад неформатованого коду: 
+function fetchUserData(userId, callback) {
+  fetchUser(userId, function(user) {
+    fetchPosts(user, function(posts) {
+      fetchComments(posts, function(comments) {
+        callback(comments);
+      });
+    });
+  });
+}
+# Код після форматування:
+function fetchUserData(userId) {
+  return fetchUser(userId)
+    .then(user => fetchPosts(user))
+    .then(posts => fetchComments(posts));
+}
+
+#7)Використання методів роботи з масивами
+# Приклад неформатованого коду:
+const array = [1, 2, 3];
+for (let index = 0; index < array.length; i++) {
+  console.log(array[index]);
+}
+# Код після форматування:
+const array = [1, 2, 3];
+array.forEach(array => console.log(array));
+
+#8)Використання методів об'єктів
+# Приклад неформатованого коду:
+const individual = { name: 'Kate', age: 19 };
+for (const property in individual) {
+  console.log(`${property}: ${individual[property]}`);
+}
+# Код після форматування:
+const individual = { name: 'Kate', age: 19 };
+Object.entries(individual).forEach(([property, value]) => 					
+console.log(`${property}: ${value}`));
+
+#9)Дотримуйтесь принципу DRY (Don't Repeat Yourself)
+# Приклад неформатованого коду:
+function calculateAreaOfCircle(radius) {
+    return Math.PI * radius * radius;
+}
+
+function calculateVolumeOfCylinder(radius, height) {
+    return Math.PI * radius * radius * height;
+}
+# Код після форматування:
+function calculateAreaOfCircle(radius) {
+    return Math.PI * radius * radius;
+}
+
+function calculateVolumeOfCylinder(radius, height) {
+    return calculateAreaOfCircle(radius) * height;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
