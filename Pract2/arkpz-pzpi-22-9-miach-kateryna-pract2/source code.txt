@@ -1,0 +1,69 @@
+1)Remove Control Flag.
+Код до рефакторингу:
+function processOrders(orders) {
+    let hasPending = false;
+    for (let i = 0; i < orders.length; i++) {
+        if (orders[i].status === 'pending') {
+            hasPending = true;
+        }
+    }
+    if (hasPending) {
+        notifyUser();
+    }
+}
+Код після рефакторингу:
+function processOrders(orders) {
+    for (let i = 0; i < orders.length; i++) {
+        if (orders[i].status === 'pending') {
+            notifyUser();
+            return;
+        }
+    }
+}
+
+2)Replace Magic Number with Symbolic Constant.
+Код до рефакторингу:
+function calculateDiscount(price) {
+    return price * 0.05;
+}
+Код після рефакторингу:
+const DISCOUNT_RATE = 0.05;
+
+function calculateDiscount(price) {
+    return price * DISCOUNT_RATE;
+}
+
+3)Encapsulate Field.
+Код до рефакторингу:
+class Employee {
+    constructor(name, salary) {
+        this.name = name;
+        this.salary = salary;
+    }
+}
+
+const emp = new Employee('Alice', 50000);
+emp.salary = -1000; // Некоректне значення
+
+Код після рефакторингу:
+class Employee {
+    constructor(name, salary) {
+        this.name = name;
+        let _salary = salary;
+
+        this.getSalary = function() {
+            return _salary;
+        };
+
+        this.setSalary = function(newSalary) {
+            if (newSalary > 0) {
+                _salary = newSalary;
+            } else {
+                console.error('Некоректна зарплата');
+            }
+        };
+    }
+}
+
+const emp = new Employee('Alice', 50000);
+emp.setSalary(-1000); // Виведе помилку
