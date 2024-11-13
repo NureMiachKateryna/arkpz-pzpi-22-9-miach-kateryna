@@ -1,0 +1,251 @@
+МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ
+
+ХАРКІВСЬКИЙ НАЦІОНАЛЬНИЙ УНІВЕРСИТЕТ РАДІОЕЛЕКТРОНІКИ
+
+
+
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи
+з дисципліни  «Аналіз та рефакторінг коду»
+на тему : «РОЗРОБКА БАЗИ ДАНИХ ДЛЯ СЕРВЕРНОЇ ЧАСТИНИ ПРОГРАМНОЇ СИСТЕМИ ТА ПРИКЛАДНОГО ПРОГРАМНОГО ІНТЕРФЕЙСУ (API)»
+
+
+
+
+
+
+
+
+Виконала:					        	Перевірив:
+
+ст. гр. ПЗПІ-22-9                                        	Дашенков Дмитро Сергійович
+М`яч Катерина Олександрівна                 
+
+
+
+
+
+
+
+
+
+
+Харків 2024
+1.1 Мета роботи
+
+Розробити базу даних для серверної частини  програмної системи та прикладного програмного інтерфейсу. 
+
+1.2 Хід роботи
+
+1) Розробити будову програмної системи.
+
+Програмна система для моніторингу запасів та зберігання меду складається з декількох основних модулів, які забезпечують функціональність збирання, обробки та зберігання даних, а також аналітики й сповіщень для кінцевих користувачів:
+-	Модуль збору даних: відстежує дані з IoT-сенсорів (температура, рівень заповнення) у реальному часі. Виконує первинну обробку отриманих даних, зокрема перевірку на їхню коректність, що забезпечує подальшу стабільну роботу всієї системи.
+-	Модуль зберігання даних: відповідальний за зберігання та обробку даних, що надходять з сенсорів. Усі дані про запаси та стан меду зберігаються у централізованій базі даних, що дозволяє ефективно організовувати доступ до інформації.
+-	Модуль аналітики та звітності: генерує звіти та аналізує дані для покращення умов зберігання. Даний модуль дозволяє прогнозувати можливі ризики у процесах зберігання, надаючи можливість підприємствам приймати обґрунтовані рішення.
+-	Модуль сповіщень: відправляє сповіщення у випадку виявлення відхилень від встановлених параметрів (наприклад, при перевищенні температури). Цей модуль може інтегруватися з мобільним додатком для оперативного інформування користувачів.
+
+2) Створити UML діаграму прецедентів для серверної частини системи.
+
+1.	Актори:
+•	Пасічник (індивідуальний користувач або представник підприємства):
+-	Налаштування сенсорів.
+-	Моніторинг умов зберігання.
+-	Отримання сповіщень.
+-	Генерація звітів.
+-	Керування обліковими записами.
+•	Робітник (тільки для підприємств):
+-	Отримання сповіщень.
+-	Відстеження змін в умовах зберігання.
+-	Перегляд інформації про запаси меду
+2.	Взаємозв’язки:
+•	Пасічник має доступ до налаштувань сенсорів для встановлення параметрів та контролю ефективності їх роботи. Здійснює моніторинг умов зберігання в реальному часі для відстеження температури, рівня заповнення бочок. Отримує сповіщення про будь-які критичні відхилення від нормальних умов зберігання, щоб своєчасно вжити заходів. Має можливість генерувати звіти для аналізу та управління запасами меду. Керує обліковими записами користувачів, надаючи доступ та ролі для робітників складу.
+•	Робітник підприємства може переглядати інформацію про запаси меду, включаючи поточний стан, температуру та рівень заповнення бочок. Отримує сповіщення про відхилення від нормальних умов зберігання для оперативної реакції. Має можливість відстежувати зміни в умовах зберігання в реальному часі для підтримки стабільного стану меду.
+ 
+Рисунок 1 – UML діаграма прецедентів
+
+3) Створити ER діаграму даних. 
+Рисунок 2 – ER діаграма даних
+4) Розробити базу даних (БД) програмної системи.
+
+Код для створення БД:
+CREATE DATABASE honey_management;
+USE honey_management;
+
+CREATE TABLE Sensor (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    type VARCHAR(50),
+    location VARCHAR(100),
+    status VARCHAR(20),
+    last_reading DATETIME
+);
+
+CREATE TABLE Honey (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    volume DECIMAL(10, 2),
+    temperature DECIMAL(5, 2),
+    fill_level DECIMAL(5, 2),
+    last_updated DATETIME,
+    sensor_id INT UNIQUE,
+    FOREIGN KEY (sensor_id) REFERENCES Sensor(id)
+);
+
+CREATE TABLE Notification (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    sensor_id INT,
+    event_type VARCHAR(50),
+    event_time DATETIME,
+    description VARCHAR(255),
+    FOREIGN KEY (sensor_id) REFERENCES Sensor(id)
+);
+
+CREATE TABLE User (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100),
+    role ENUM('Пасічник', 'Робітник складу'),
+    contact_info VARCHAR(100)
+);
+
+CREATE TABLE Report (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    created_by INT,
+    creation_date DATETIME,
+    content TEXT,
+    FOREIGN KEY (created_by) REFERENCES User(id)
+);
+
+CREATE TABLE User_Notification (
+    user_id INT,
+    notification_id INT,
+    PRIMARY KEY (user_id, notification_id),
+    FOREIGN KEY (user_id) REFERENCES User(id),
+    FOREIGN KEY (notification_id) REFERENCES Notification(id)
+);
+
+Honey: зберігає інформацію про мед та умови його зберігання.
+Sensor: зберігає дані про сенсори для контролю умов зберігання.
+Notification: зберігає сповіщення про події, пов'язані з умовами зберігання меду.
+User: зберігає інформацію про користувачів системи.
+Report: зберігає інформацію про звіти, створені користувачами.
+User_Notification: реалізує зв’язок "багато до багатьох" між користувачами та сповіщеннями.
+
+5) Створити діаграму структури БД.
+ 
+Рисунок 3 – Діаграма структури БД
+На цій діаграмі відображена структура бази даних програмної системи для моніторингу умов зберігання меду. Діаграма включає таблиці Honey, Sensor, Notification, User, Report та User_Notification, а також зв’язки між ними. Зв’язки між таблицями показують логічні залежності та дозволяють зберігати дані про мед, сенсори, сповіщення, користувачів і звіти у взаємопов'язаному вигляді.
+6) Розробити функції роботи з БД (ORM або CoRM тощо).
+
+Для роботи з базою даних використали ORM (Object-Relational Mapping) бібліотеку Sequelize. Використання ORM спрощує процес створення, оновлення, читання та видалення даних, а також забезпечує більш структурований та безпечний підхід до роботи з базою даних.
+Кожна модель представляє одну таблицю і визначає її поля та типи даних. 
+Наприклад модель Sensor:
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Sensor = sequelize.define('Sensor', {
+    type: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    location: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    status: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    last_reading: {
+        type: DataTypes.DATE,
+    }
+}, {
+    tableName: 'sensor', 
+    timestamps: false     
+});
+
+module.exports = Sensor;
+
+За допомогою Sequelize були реалізовані базові функції CRUD (Create, Read, Update, Delete) для кожної моделі. Наприклад для моделі Honey:
+// Отримати всі записи меду
+router.get('/honey', async (req, res) => {
+    try {
+        const honeyRecords = await Honey.findAll();
+        res.json(honeyRecords);
+    } catch (error) {
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
+// Створити запис меду
+router.post('/honey', async (req, res) => {
+    try {
+        const honey = await Honey.create(req.body);
+        res.status(201).json(honey);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to create honey record' });
+    }
+});
+
+// Оновити запис меду
+router.put('/honey/:id', async (req, res) => {
+    try {
+        const honey = await Honey.findByPk(req.params.id);
+        if (!honey) {
+            return res.status(404).json({ error: 'Honey record not found' });
+        }
+        await honey.update(req.body);
+        res.json(honey);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update honey record' });
+    }
+});
+
+// Видалити запис меду
+router.delete('/honey/:id', async (req, res) => {
+    try {
+        const honey = await Honey.findByPk(req.params.id);
+        if (!honey) {
+            return res.status(404).json({ error: 'Honey record not found' });
+        }
+        await honey.destroy();
+        res.json({ message: 'Honey record deleted' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete honey record' });
+    }
+});
+
+7) Розробити API (REST або GraphQL, gRPC тощо) для взаємодії серверної частини з клієнтами.
+
+У проекті використовується REST API, що дозволяє виконувати основні операції (Create, Read, Update, Delete) з базою даних за допомогою HTTP-запитів. Для кожної моделі бази даних (Sensor, Notification, Report, User, UserNotification) були створені окремі маршрути, що дозволяють клієнтам виконувати CRUD-операції. Наприклад маршрути для User:
+-	POST /api/user - створення нового користувача.
+-	GET /api/users - отримання списку всіх користувачів.
+-	GET /api/user/ - отримання інформації про конкретного користувача.
+-	PUT /api/user/ - оновлення даних конкретного користувача.
+-	DELETE /api/user/ - видалення користувача.
+
+Приклади HTTP-запитів:
+-	POST: Додавання нового користувача до бази даних:
+POST /api/user
+ 
+-	GET: Отримання всіх user:
+          GET /api/users
+ 
+-	PUT: Оновлення даних конкретного user: 
+          PUT /api/user/1
+
+ 
+-	DELETE: Видалення user за ID: 
+          DELETE /api/user/2
+ 
+Взаємодія з клієнтами відбувається у форматі JSON. Клієнти надсилають дані у JSON-форматі, і відповіді API також повертаються у JSON.
+
+
