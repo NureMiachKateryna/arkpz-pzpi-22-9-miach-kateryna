@@ -26,4 +26,7 @@ User.ROLES = {
     WAREHOUSE_WORKER: 2
 };
 
+User.isPasichnik = (role) => role === User.ROLES.PASICHNIK;
+User.isWarehouseWorker = (role) => role === User.ROLES.WAREHOUSE_WORKER;
+
 module.exports = User;

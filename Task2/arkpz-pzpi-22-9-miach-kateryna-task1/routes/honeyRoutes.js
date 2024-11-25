@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Імпорт моделей
+const checkRole = require('../middleware/checkRole');
 const Sensor = require('../models/Sensor');
 const Honey = require('../models/Honey');
 const User = require('../models/User');
@@ -117,54 +118,61 @@ router.delete('/honey/:id', async (req, res) => {
 
 // *** Маршрути для моделі User ***
 
-// Отримати всіх користувачів
-router.get('/users', async (req, res) => {
+// Отримати всіх користувачів (тільки для Пасічника)
+router.get('/users', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
     try {
         const users = await User.findAll();
         res.json(users);
     } catch (error) {
-        res.status(500).json({ error: 'Something went wrong' });
+        res.status(500).json({ error: 'Помилка при отриманні користувачів' });
     }
 });
 
-// Створити користувача
-router.post('/user', async (req, res) => {
+// Створити користувача (тільки для Пасічника)
+router.post('/user', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
     try {
-        const user = await User.create(req.body);
-        res.status(201).json(user);
+        const { name, role, contact_info } = req.body;
+        const newUser = await User.create({ name, role, contact_info });
+        res.status(201).json(newUser);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create user' });
+        res.status(500).json({ error: 'Помилка при створенні користувача' });
     }
 });
 
-// Оновити користувача
+// Оновити користувача 
 router.put('/user/:id', async (req, res) => {
     try {
         const user = await User.findByPk(req.params.id);
+
+        // Перевірка, чи існує користувач
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'Користувача не знайдено' });
         }
+
+        // Логіка доступу для оновлення
+        if (req.user.role === User.ROLES.WAREHOUSE_WORKER && req.user.id !== user.id) {
+            return res.status(403).json({ error: 'Робітник складу може змінювати лише свої дані' });
+        }
+
+        // Оновлення даних
         await user.update(req.body);
         res.json(user);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to update user' });
+        res.status(500).json({ error: 'Помилка при оновленні користувача' });
     }
 });
 
-// Видалити користувача
-router.delete('/user/:id', async (req, res) => {
+// Видалити користувача (тільки для Пасічника)
+router.delete('/user/:id', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
     try {
         const user = await User.findByPk(req.params.id);
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'Користувача не знайдено' });
         }
         await user.destroy();
-        res.json({ message: 'User deleted' });
+        res.json({ message: 'Користувача успішно видалено' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to delete user' });
+        res.status(500).json({ error: 'Помилка при видаленні користувача' });
     }
 });
 

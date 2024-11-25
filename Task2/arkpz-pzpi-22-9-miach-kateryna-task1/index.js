@@ -1,12 +1,19 @@
 const express = require('express');
 const sequelize = require('./config/database');
 const honeyRoutes = require('./routes/honeyRoutes');
+const settingsRoutes = require('./routes/settings');
+const mockUser = require('./middleware/mockUser'); // Імпортуємо mockUser
 
 const app = express();
 app.use(express.json());
 
+// Додаємо mockUser перед підключенням маршрутів
+app.use(mockUser); // Додає req.user до кожного запиту
+
 // Підключення маршрутів
 app.use('/api', honeyRoutes);
+app.use('/api', settingsRoutes);
+
 
 sequelize.authenticate()
     .then(() => {
