@@ -1,7 +1,7 @@
 const User = require('../models/User');
 
 const mockUser = (req, res, next) => {
-    req.user = { id: 6, role: User.ROLES.WAREHOUSE_WORKER }; // WAREHOUSE_WORKER  PASICHNIK
+    req.user = { role: User.ROLES.PASICHNIK }; // id: WAREHOUSE_WORKER  PASICHNIK
     next();
 };
 

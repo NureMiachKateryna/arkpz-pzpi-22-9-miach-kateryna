@@ -186,25 +186,6 @@ router.get('/notification', async (req, res) => {
     }
 });
 
-// Створити нове сповіщення
-router.post('/notification', async (req, res) => {
-    try {
-        const { event_type, event_time, description, sensor_id } = req.body;
-
-        const eventTime = new Date(event_time * 1000);
-
-        const notification = await Notification.create({
-            event_type,
-            event_time: eventTime,
-            description,
-            sensor_id
-        });
-        res.status(201).json(notification);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create notification' });
-    }
-});
 
 // Оновити сповіщення
 router.put('/notification/:id', async (req, res) => {
