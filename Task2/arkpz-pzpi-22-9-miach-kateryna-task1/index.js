@@ -1,9 +1,11 @@
 const express = require('express');
 const sequelize = require('./config/database');
-const honeyRoutes = require('./routes/honeyRoutes');
-const settingsRoutes = require('./routes/settings');
+const sensorRoutes = require("./routes/sensorRoutes");
+const honeyRoutes = require("./routes/honeyRoutes");
+const userRoutes = require("./routes/userRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 const mockUser = require('./middleware/mockUser'); // Імпортуємо mockUser
-const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 app.use(express.json());
@@ -12,9 +14,11 @@ app.use(express.json());
 app.use(mockUser); // Додає req.user до кожного запиту
 
 // Підключення маршрутів
-app.use('/api', honeyRoutes);
-app.use('/api', settingsRoutes);
-app.use('/api', notificationRoutes);
+app.use("/api/sensor", sensorRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/honey", honeyRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/user", userRoutes);
 
 
 sequelize.authenticate()

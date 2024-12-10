@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Sensor = require('./Sensor');
-const User_Notification = require('../models/User_Notification');
 
 const Notification = sequelize.define('Notification', {
     event_type: {

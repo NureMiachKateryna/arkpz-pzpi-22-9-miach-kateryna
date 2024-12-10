@@ -1,22 +1,44 @@
-const express = require('express');
-const NotificationController = require('../controllers/NotificationController');
-
+const express = require("express");
 const router = express.Router();
-const notificationController = new NotificationController();
+const Notification = require("../models/Notification");
 
-router.use('/notification', (req, res, next) => {
-    if (req.body.event_time) {
-        req.body.event_time = new Date(req.body.event_time * 1000);
+// Отримати всі сповіщення
+router.get("/notification", async (req, res) => {
+    try {
+        const notifications = await Notification.findAll();
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ error: "Something went wrong" });
     }
-    next();
 });
 
-router.post('/notification', async (req, res) => {
+// Оновити сповіщення
+router.put("/notification/:id", async (req, res) => {
     try {
-        await notificationController.createNotification(req, res);
+        const notification = await Notification.findByPk(req.params.id);
+        if (!notification) {
+            return res.status(404).json({ error: "Notification not found" });
+        }
+        await notification.update(req.body);
+        res.json(notification);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: error.message || 'Failed to create notification' });
+        res.status(500).json({ error: "Failed to update notification" });
+    }
+});
+
+// Видалити сповіщення
+router.delete("/notification/:id", async (req, res) => {
+    try {
+        const notification = await Notification.findByPk(req.params.id);
+        if (!notification) {
+            return res.status(404).json({ error: "Notification not found" });
+        }
+        await notification.destroy();
+        res.json({ message: "Notification deleted" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Failed to delete notification" });
     }
 });
 
