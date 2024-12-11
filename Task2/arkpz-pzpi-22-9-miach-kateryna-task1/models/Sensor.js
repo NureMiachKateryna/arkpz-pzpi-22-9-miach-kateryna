@@ -1,3 +1,6 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
 const Sensor = sequelize.define(
     "Sensor",
     {
@@ -6,16 +9,7 @@ const Sensor = sequelize.define(
             primaryKey: true,
             autoIncrement: true,
         },
-        type: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            validate: {
-                isIn: {
-                    args: [[1, 2]],
-                    msg: "Type must be either 1 or 2",
-                },
-            },
-        },
+
         location: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -27,18 +21,22 @@ const Sensor = sequelize.define(
         },
         temperature: {
             type: DataTypes.FLOAT,
+            allowNull: true,
         },
-        humidity: {
+        fullness: {
             type: DataTypes.FLOAT,
+            allowNull: true,
         },
         last_reading: {
             type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
         },
     },
     {
-        tableName: "sensors",
+        tableName: "sensor",
         timestamps: false,
     }
 );
 
 module.exports = Sensor;
+

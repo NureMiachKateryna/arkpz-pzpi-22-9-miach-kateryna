@@ -1,5 +1,5 @@
-const express = require('express');
-const sequelize = require('./config/database');
+const express = require("express");
+const sequelize = require("./config/database");
 const sensorRoutes = require("./routes/sensorRoutes");
 const honeyRoutes = require("./routes/honeyRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -18,7 +18,7 @@ app.use("/api/sensor", sensorRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/honey", honeyRoutes);
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/users", userRoutes);
 
 
 sequelize.authenticate()
