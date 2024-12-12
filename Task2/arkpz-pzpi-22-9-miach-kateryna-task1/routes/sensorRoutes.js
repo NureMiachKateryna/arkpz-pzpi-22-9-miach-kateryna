@@ -12,8 +12,8 @@ router.get("/", async (req, res) => {
         const formattedSensors = sensors.map(sensor => ({
             id: sensor.id,
             location: sensor.location,
-            temperature: sensor.temperature, // Включаємо температуру
-            fullness: sensor.fullness,       // Включаємо заповненість
+            temperature: sensor.temperature,
+            fullness: sensor.fullness,
             last_reading: sensor.last_reading
                 ? moment(sensor.last_reading).format("YYYY-MM-DD HH:mm:ss")
                 : null,
