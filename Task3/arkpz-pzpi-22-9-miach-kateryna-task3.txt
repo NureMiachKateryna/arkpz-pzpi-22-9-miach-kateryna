@@ -1,0 +1,285 @@
+МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ
+
+ХАРКІВСЬКИЙ НАЦІОНАЛЬНИЙ УНІВЕРСИТЕТ РАДІОЕЛЕКТРОНІКИ
+
+
+
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи
+з дисципліни  «Аналіз та рефакторинг коду»
+на тему : «РОЗРОБКА БІЗНЕС-ЛОГІКИ ТА ФУНКЦІЙ АДМІНІСТРУВАННЯ СЕРВЕРНОЇ ЧАСТИНИ ПРОГРАМНОЇ СИСТЕМИ»
+
+
+
+
+
+
+
+
+Виконала:					        	Перевірив:
+
+ст. гр. ПЗПІ-22-9                                        	Дашенков Дмитро Сергійович
+М'яч Катерина Олександрівна                 
+
+
+
+
+
+
+
+
+
+
+
+Харків 2024
+1.1 Мета роботи
+Розробити бізнес-логику та функції адміністрування серверної частини  програмної системи.
+
+1.2 Хід роботи
+
+1. Розробити бізнес логіку серверної частини програмної системи.
+1)	Основні функції бізнес-логіки
+Бізнес-логіка серверної частини системи для моніторингу запасів і зберігання меду реалізує наступні завдання:
+•	Обробка даних сенсорів: прийом даних, перевірка їхньої коректності, збереження в базі.
+•	Моніторинг умов зберігання: контроль параметрів, таких як температура і рівень заповнення, та генерація сповіщень у разі відхилень.
+•	Управління користувачами: створення, редагування, видалення облікових записів користувачів.
+•	Генерація звітів: підготовка аналітичних даних для покращення умов зберігання та прогнозування можливих ризиків.
+2)	Реалізація CRUD-операцій
+Для кожної сутності бази даних були створені функції, що забезпечують операції створення, читання, оновлення та видалення записів:
+•	Таблиця Honey: обробка інформації про мед.
+•	Таблиця Sensor: управління сенсорами.
+•	Таблиця Notification: створення сповіщень.
+•	Таблиця User: обробка даних користувачів.
+•	Таблиця Report: генерація і збереження звітів.
+3)	API для взаємодії з клієнтами
+Серверна частина надає REST API для виконання основних бізнес-функцій. Ось приклади маршрутів:
+•	GET /api/honey — отримання даних про мед.
+•	POST /api/sensor — додавання нового сенсора.
+•	PUT /api/user/:id — оновлення інформації про користувача.
+•	DELETE /api/notification/:id — видалення сповіщення.
+4)	Логіка обробки сповіщень
+У разі відхилення параметрів (температури чи рівня заповнення) від встановлених норм:
+•	Дані сенсорів перевіряються системою.
+•	Генерується запис у таблиці Notification.
+•	Відправляється сповіщення за допомогою відповідного API.
+5)	Використання ORM
+Для взаємодії з базою даних використовується бібліотека Sequelize. Вона дозволяє:
+•	Легко управляти моделями даних.
+•	Забезпечити безпечну обробку запитів до бази.
+•	Зменшити кількість ручного коду SQL.
+Приклад моделі для таблиці Sensor:
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+const Sensor = sequelize.define('Sensor', {
+    type: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    location: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    status: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    last_reading: {
+        type: DataTypes.DATE,
+    }
+}, {
+    tableName: 'sensor',
+    timestamps: false
+});
+module.exports = Sensor;
+
+2. Розробити функції адміністрування серверної частини програмної системи.
+1)	Створено middleware checkRole, яке обмежує доступ до маршрутів залежно від ролі користувача.
+const checkRole = (requiredRole) => (req, res, next) => {
+    const userRole = req.user.role; 
+    if (userRole !== requiredRole) {
+        return res.status(403).json({ error: 'Доступ заборонено' });
+    }
+    next();
+};
+
+module.exports = checkRole;
+
+2)	Було розроблено mockUser.js, який додає до кожного запиту імітацію користувача з певною роллю для тестування.
+const User = require('../models/User');
+const mockUser = (req, res, next) => {
+    req.user = { role: User.ROLES.WAREHOUSE_WORKER }; //WAREHOUSE_WORKER  PASICHNIK
+    next();
+};
+module.exports = mockUser;
+Завдяки цьому можна було динамічно змінювати роль і перевіряти доступ.
+3)	Для моделі User реалізовано маршрути:
+GET /api/users — Отримання списку всіх користувачів (доступно лише "Пасічнику").
+POST /api/user — Створення нового користувача (доступно лише "Пасічнику").
+PUT /api/user/:id — Оновлення даних користувача (доступно лише "Пасічнику").
+DELETE /api/user/:id — Видалення користувача (доступно лише "Пасічнику").
+// Створити користувача (тільки для Пасічника)
+router.post('/user', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
+    try {
+        const { name, role, contact_info } = req.body;
+        const newUser = await User.create({ name, role, contact_info });
+        res.status(201).json(newUser);
+    } catch (error) {
+        res.status(500).json({ error: 'Помилка при створенні користувача' });
+    }
+});
+
+3. Створити програмну реалізацію бізнес логіки та функцій адміністрування серверної частини.
+1)	Моделі бази даних
+Всі моделі реалізуються через ORM (наприклад, Sequelize). Приклад моделі User: 
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const User = sequelize.define('User', {
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    role: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+            isIn: [[1, 2]]
+        }
+    },
+    contact_info: {
+        type: DataTypes.STRING,
+    }
+}, {
+    tableName: 'user',
+    timestamps: false
+});
+
+User.ROLES = {
+    PASICHNIK: 1,
+    WAREHOUSE_WORKER: 2
+};
+
+User.isPasichnik = (role) => role === User.ROLES.PASICHNIK;
+User.isWarehouseWorker = (role) => role === User.ROLES.WAREHOUSE_WORKER;
+
+module.exports = User;
+2)	Логіка маршруту (бізнес-логіка)
+Приклад логіки для створення нового користувача:
+•	Вхідні дані перевіряються.
+•	Користувач створюється в базі даних.
+•	У разі помилки повертається відповідне повідомлення.
+Приклад коду:
+router.post('/user', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
+    try {
+        const { name, role, contact_info } = req.body;
+        const newUser = await User.create({ name, role, contact_info });
+        res.status(201).json(newUser);
+    } catch (error) {
+        res.status(500).json({ error: 'Помилка при створенні користувача' });
+    }
+});
+
+3)	Middleware для ролей
+checkRole забезпечує захист маршрутів залежно від ролі користувача. 
+Приклад коду:
+const checkRole = (requiredRole) => (req, res, next) => {
+    const userRole = req.user.role;
+    if (userRole !== requiredRole) {
+        return res.status(403).json({ error: 'Доступ заборонено' });
+    }
+    next();
+};
+
+module.exports = checkRole;
+4)	Функції адміністрування
+CRUD для користувачів
+•	Отримати список користувачів:
+GET /users: Доступно лише для ролі "Пасічник".
+router.get('/users', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
+    try {
+        const users = await User.findAll();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: 'Помилка при отриманні користувачів' });
+    }
+});
+•	Створити нового користувача:
+POST /user: Доступно лише для ролі "Пасічник".
+router.post('/user', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
+    try {
+        const { name, role, contact_info } = req.body;
+        const newUser = await User.create({ name, role, contact_info });
+        res.status(201).json(newUser);
+    } catch (error) {
+        res.status(500).json({ error: 'Помилка при створенні користувача' });
+    }
+});
+•	Оновити дані користувача:
+PUT /user/:id: Доступ:
+-	"Пасічник" може змінювати дані будь-якого користувача.
+-	"Робітник складу" може змінювати лише свої дані.
+router.put('/user/:id', async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id);
+
+        // Перевірка, чи існує користувач
+        if (!user) {
+            return res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+
+        // Логіка доступу для оновлення
+        if (req.user.role === User.ROLES.WAREHOUSE_WORKER && req.user.id !== user.id) {
+            return res.status(403).json({ error: 'Робітник складу може змінювати лише свої дані' });
+        }
+
+        // Оновлення даних
+        await user.update(req.body);
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: 'Помилка при оновленні користувача' });
+    }
+});
+•	Видалити користувача:
+DELETE /user/:id: Доступно лише для ролі "Пасічник".
+router.delete('/user/:id', checkRole(User.ROLES.PASICHNIK), async (req, res) => {
+    try {
+        const user = await User.findByPk(req.params.id);
+        if (!user) {
+            return res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+        await user.destroy();
+        res.json({ message: 'Користувача успішно видалено' });
+    } catch (error) {
+        res.status(500).json({ error: 'Помилка при видаленні користувача' });
+    }
+});
+
+
+
+
+
+
+4. UML діаграма діяльності для серверної частини
+ 
+5. UML діаграма взаємодії для серверної частини.
+ 
+1)	Учасники:
+•	Користувач (User): надсилає запит до сервера.
+•	Сервер (Server): обробляє запит, перевіряє роль користувача та взаємодіє з базою даних.
+•	База Даних (Database): виконує запити CRUD або оновлює дані.
+2)	Взаємодії:
+•	Користувач надсилає запит до сервера.
+•	Сервер перевіряє запит і роль користувача:
+o	Якщо це Пасічник, виконується запит CRUD до бази даних.
+o	Якщо це Робітник складу, виконується лише оновлення власних даних.
+•	Сервер повертає результат користувачу.
+3)	Умови (alt/else):
+•	Використано для опису різних дій залежно від ролі користувача.
+
